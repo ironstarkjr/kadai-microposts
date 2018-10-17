@@ -7,6 +7,8 @@ class User < ApplicationRecord
   has_many :followings, through: :relationships, source: :follow
   has_many :reverce_of_relationship, class_name: 'Relationship', foreign_key: 'follow_id'
   has_many :followers, through: :reverce_of_relationship, source: :user
+  has_many :user_microposts
+  has_many :favorite_microposts, through: :user_microposts, source: :micropost
   
   validates :name, presence: true, length: {maximum: 50}
   validates :email, presence: true, length: {maximum: 255},
@@ -32,5 +34,18 @@ class User < ApplicationRecord
   
   def feed_microposts
     Micropost.where(user_id: self.following_ids << self.id)
+  end
+  
+  def favorite(micropost)
+    self.user_microposts.find_or_create_by(micropost_id: micropost.id)
+  end
+  
+  def unfavorite(micropost)
+    user_micropost = self.user_microposts.find_by(micropost_id: micropost.id)
+    user_micropost.destroy if user_micropost
+  end
+  
+  def favorite?(micropost)
+    self.favorite_microposts.include?(micropost)
   end
 end
